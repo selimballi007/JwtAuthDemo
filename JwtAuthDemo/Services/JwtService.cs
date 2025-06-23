@@ -25,12 +25,14 @@ namespace JwtAuthDemo.Services
 
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _config["JwtIssuer"],
-                audience: _config["JwtAudience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:ExpiresInMinutes"]!)),
-                signingCredentials: creds);
+            var token = new JwtSecurityToken
+                (
+                    issuer: _config["Jwt:Issuer"],        // <- issuer eklendi
+                    audience: _config["Jwt:Audience"],    // <- audience eklendi
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:ExpiresInMinutes"]!)),
+                    signingCredentials: creds
+                );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
