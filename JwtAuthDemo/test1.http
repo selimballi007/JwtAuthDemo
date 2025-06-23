@@ -1,0 +1,18 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+POST http://localhost:5203/api/auth/register
+Content-Type: application/json
+{
+  "UserName": "hatice",
+  "Email": "hatice@gmail.com",
+  "Password": "hat"
+}
+
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+POST http://localhost:5203/api/auth/login
+Content-Type: application/json
+{
+  "email": "hatice@gmail.com",
+  "password": "hat"
+}
