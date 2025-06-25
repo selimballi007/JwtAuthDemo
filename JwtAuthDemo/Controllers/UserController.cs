@@ -19,7 +19,7 @@ namespace JwtAuthDemo.Controllers
 
             return Ok(new
             {
-                message = "Token doğrulandı!",
+                message = "Token verified!",
                 email,
                 username
             });

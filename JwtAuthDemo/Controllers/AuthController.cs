@@ -26,7 +26,7 @@ namespace JwtAuthDemo.Controllers
         public IActionResult Register(RegisterDTO request)
         {
             if (_context.Users.Any(x => x.Email == request.Email))
-                return BadRequest("Email zaten kullanılıyor.");
+                return BadRequest("Email is already in use.");
 
             var user = new User
             {
@@ -38,7 +38,7 @@ namespace JwtAuthDemo.Controllers
 
             _context.Users.Add(user);
             _context.SaveChanges();
-            return Ok(new { message="Kullanıcı başarıyla kaydedildi." });
+            return Ok(new { message= "The user has been successfully registered." });
 
         }
 
@@ -48,12 +48,12 @@ namespace JwtAuthDemo.Controllers
             var user = _context.Users.FirstOrDefault(user => user.Email == request.Email);
 
             if(user==null)
-                return Unauthorized("Kullanıcı bulunamadı.");
+                return Unauthorized("The user could not be found.");
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if(result!=PasswordVerificationResult.Success)
-                return Unauthorized("Parola yanlış.");
+                return Unauthorized("The password is incorrect.");
 
             var token = _jwtService.GenerateToken(user);
 
