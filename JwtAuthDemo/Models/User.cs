@@ -11,5 +11,7 @@ namespace JwtAuthDemo.Models
         public string Email { get; set; }
         [Required]
         public string PasswordHash { get; set; }
+        public string? ResetToken { get; set; }
+        public DateTime? ResetTokenExpiry { get; set; }
     }
 }

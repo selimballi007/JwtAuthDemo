@@ -3,6 +3,7 @@ using JwtAuthDemo.Models;
 using JwtAuthDemo.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
 
 namespace JwtAuthDemo.Controllers
@@ -59,5 +60,35 @@ namespace JwtAuthDemo.Controllers
 
             return Ok(new { token });
         }
+
+        [HttpPost("forgot-password")]
+
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDTO request)
+        {
+            if (string.IsNullOrEmpty(request.Email))
+                return BadRequest("Email required.");
+
+            var user = await _context.Users.FirstOrDefaultAsync(user=>user.Email==request.Email);
+
+            if (user == null)
+                return Ok(); // Security: Don't tell me if there is an email or not
+
+            // 1. Generate reset token (guid as an example)
+            var token = Guid.NewGuid().ToString();
+
+            // 2. Temporarily store the token (in the real scenario, it should be stored in the DB)
+            user.ResetToken = token;
+            user.ResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+            await _context.SaveChangesAsync();
+
+            // 3. Create the link
+            var resetLink = $"https://localhost:3000/reset-password?token={token}";
+
+            // 4. Send an email (let's write to the console for now)
+            Console.WriteLine($"Şifre sıfırlama linki: {resetLink}");
+
+            return Ok(); // Email gönderildi bilgisi döneriz
+        }
+
     }
 }

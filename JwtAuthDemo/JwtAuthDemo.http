@@ -1,15 +1,12 @@
 @JwtAuthDemo_HostAddress = http://localhost:5203/api
 
-GET {{JwtAuthDemo_HostAddress}}/weatherforecast/
-Accept: application/json
-
 ### Register a new user
 POST {{JwtAuthDemo_HostAddress}}/auth/register
 Content-Type: application/json
 {
-  "UserName": "user",
-  "Email": "user@gmail.com",
-  "Password": "use"
+  "UserName": "tri4",
+  "Email": "tri4@gmail.com",
+  "Password": "tri4"
 }
 
 ### Login with the new user
