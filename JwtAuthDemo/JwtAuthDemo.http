@@ -14,8 +14,8 @@ Content-Type: application/json
 POST {{JwtAuthDemo_HostAddress}}/auth/login
 Content-Type: application/json
 {
-  "email": "user@gmail.com",
-  "password": "use"
+  "email": "tri6@gmail.com",
+  "password": "tri666"
 }
 
 ### Get the result from the token control
@@ -23,3 +23,18 @@ Content-Type: application/json
 GET {{JwtAuthDemo_HostAddress}}/user/me
 Authorization: Bearer {{login.response.body.$.token}}
 Accept: application/json
+
+### Send forgot-password link email
+POST {{JwtAuthDemo_HostAddress}}/auth/forgot-password
+Content-Type: application/json
+{
+  "email": "selimballi13@gmail.com",
+}
+
+### Reset password with the token
+POST {{JwtAuthDemo_HostAddress}}/auth/reset-password  
+Content-Type: application/json
+{
+  "token": "178dfb14-250a-426b-a43e-0a19e16a1788",
+  "newPassword": "123456789"
+}
