@@ -16,13 +16,14 @@ namespace JwtAuthDemo.Controllers
         private readonly PasswordHasher<User> _passwordHasher;
         private readonly JwtService _jwtService;
         private readonly IEmailService _emailService;
-        public AuthController(ApplicationDbContext context, JwtService jwtService, IEmailService emailService)
+        private readonly IConfiguration _configuration;
+        public AuthController(ApplicationDbContext context, JwtService jwtService, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
             _passwordHasher = new PasswordHasher<User>();
             _jwtService = jwtService;
             _emailService = emailService;
-
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -84,7 +85,7 @@ namespace JwtAuthDemo.Controllers
             await _context.SaveChangesAsync();
 
             // 3. Create the link
-            var resetLink = $"https://localhost:3000/reset-password?token={token}";
+            var resetLink = $"{_configuration["FrontendUrl"]}/reset-password?token={token}";
 
             // 4. Send an email
             await _emailService.SendEmailAsync(

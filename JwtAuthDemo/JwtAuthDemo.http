@@ -28,13 +28,5 @@ Accept: application/json
 POST {{JwtAuthDemo_HostAddress}}/auth/forgot-password
 Content-Type: application/json
 {
-  "email": "selimballi13@gmail.com",
-}
-
-### Reset password with the token
-POST {{JwtAuthDemo_HostAddress}}/auth/reset-password  
-Content-Type: application/json
-{
-  "token": "178dfb14-250a-426b-a43e-0a19e16a1788",
-  "newPassword": "123456789"
+  "email": "selimballi13@gmail.com"
 }
