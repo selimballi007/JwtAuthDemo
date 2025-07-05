@@ -30,3 +30,6 @@ Content-Type: application/json
 {
   "email": "selimballi13@gmail.com"
 }
+
+### Verify Email Token
+GET {{JwtAuthDemo_HostAddress}}/auth/verify-email?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNlbGltYmFsbGkxM0BnbWFpbC5jb20iLCJ0eXBlIjoiZW1haWxfdmVyaWZ5IiwiZXhwIjoxNzUxNTY1Mzk3fQ.dXG-_0U3POZ5snvjQavi9qbELVrETV0kytFSEfYG_1U

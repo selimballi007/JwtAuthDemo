@@ -36,5 +36,25 @@ namespace JwtAuthDemo.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-    }    
+
+        public string GenerateEmailVerificationToken(User user)
+        {
+            var claims = new[]
+            {
+                new Claim ("email",user.Email),
+                new Claim ("type","email_verify")
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:EmailVerificationExpiresInMinutes"]!)),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+    }
 }

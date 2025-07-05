@@ -4,7 +4,11 @@ using JwtAuthDemo.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SQLitePCL;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace JwtAuthDemo.Controllers
 {
@@ -17,17 +21,19 @@ namespace JwtAuthDemo.Controllers
         private readonly JwtService _jwtService;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
-        public AuthController(ApplicationDbContext context, JwtService jwtService, IEmailService emailService, IConfiguration configuration)
+        private readonly IFileTemplateService _emailTemplate;
+        public AuthController(ApplicationDbContext context, JwtService jwtService, IEmailService emailService, IConfiguration configuration, IFileTemplateService emailTemplate)
         {
             _context = context;
             _passwordHasher = new PasswordHasher<User>();
             _jwtService = jwtService;
             _emailService = emailService;
             _configuration = configuration;
+            _emailTemplate = emailTemplate;
         }
 
         [HttpPost("register")]
-        public IActionResult Register(RegisterDTO request)
+        public async Task<IActionResult> Register(RegisterDTO request)
         {
             if (_context.Users.Any(x => x.Email == request.Email))
                 return BadRequest("Email is already in use.");
@@ -42,7 +48,65 @@ namespace JwtAuthDemo.Controllers
 
             _context.Users.Add(user);
             _context.SaveChanges();
+
+            var token = _jwtService.GenerateEmailVerificationToken(user);
+            var verifyLink = $"{_configuration["FrontendUrl"]}/verify-email?token={token}";
+            var subject = "Email Confirmation";
+            var emailverificationExpiresInMinutes = _configuration["Jwt:EmailVerificationExpiresInMinutes"];
+            var username = user.Username ?? "User";
+            var body = await _emailTemplate.GetParsedTemplateAsync("EmailVerificationTemplate.html", new Dictionary<string, string>
+            {
+                { "Username", username },
+                { "VerificationLink", verifyLink },
+                { "EmailVerificationExpiresInMinutes", emailverificationExpiresInMinutes }
+            });
+
+            await _emailService.SendEmailAsync(user.Email, subject, body);
+
             return Ok(new { message = "The user has been successfully registered." });
+
+        }
+
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            try
+            {
+                var principal = handler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key
+                }, out _);
+
+                var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+                var type = principal.Claims.FirstOrDefault(c => c.Type == "type")?.Value;
+
+                if (type != "email_verify" || string.IsNullOrEmpty(email))
+                    return BadRequest("Invalid token.");
+
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+                if (user == null)
+                    return BadRequest("User not found.");
+
+                user.IsEmailConfirmed = true;
+                await _context.SaveChangesAsync();
+
+                return Ok("Email Confirmed!");
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                return BadRequest("Token expired.");
+            }
+            catch (Exception)
+            {
+                return BadRequest("Invalid token.");
+            }
 
         }
 
@@ -59,9 +123,40 @@ namespace JwtAuthDemo.Controllers
             if (result != PasswordVerificationResult.Success)
                 return Unauthorized("The password is incorrect.");
 
+            if (!user.IsEmailConfirmed)
+                return Unauthorized("Please verify your email address first.");
+
             var token = _jwtService.GenerateToken(user);
 
             return Ok(new { token });
+        }
+
+        [HttpGet("resend-verification")]
+        public async Task<IActionResult> ResendVerification(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+                return NotFound("The user could not be found.");
+
+            if (user.IsEmailConfirmed == true)
+                return BadRequest("Email has been already confirmed.");
+
+            var token = _jwtService.GenerateEmailVerificationToken(user);
+            var verifyLink = $"{_configuration["FrontendUrl"]}/verify-email?token={token}";
+            var subject = "Email Confirmation";
+            var emailverificationExpiresInMinutes = _configuration["Jwt:EmailVerificationExpiresInMinutes"];
+            var username = user.Username ?? "User";
+            var body = await _emailTemplate.GetParsedTemplateAsync("EmailVerificationTemplate.html", new Dictionary<string, string>
+            {
+                { "Username", username },
+                { "VerificationLink", verifyLink },
+                { "EmailVerificationExpiresInMinutes", emailverificationExpiresInMinutes }
+            });
+
+            await _emailService.SendEmailAsync(user.Email, subject, body);
+
+            return Ok(new { message = "Confirmation email was resent." });
         }
 
         [HttpPost("forgot-password")]
@@ -88,11 +183,17 @@ namespace JwtAuthDemo.Controllers
             var resetLink = $"{_configuration["FrontendUrl"]}/reset-password?token={token}";
 
             // 4. Send an email
-            await _emailService.SendEmailAsync(
-                    user.Email,
-                    "Password Reset Request",
-                    $"<p>Hi!,</p><p>To reset your password <a href='{resetLink}'>click here</a> . </p><p>This link is valid within 1 hour.</p>"
-            );
+            var userName = user.Username ?? "User";
+            var subject = "Password Reset Request";
+            var resetPasswordExpiresInMinutes = _configuration["ResetPasswordExpiresInMinutes"];
+            var body = await _emailTemplate.GetParsedTemplateAsync("ResetPasswordTemplate.html", new Dictionary<string, string>
+            {
+                { "Username", userName },
+                { "ResetLink", resetLink },
+                { "ResetPasswordExpiresInMinutes", resetPasswordExpiresInMinutes }
+            });
+
+            await _emailService.SendEmailAsync(user.Email, subject,body);
 
             return Ok(); // We'll return the email sent info
         }
