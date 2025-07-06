@@ -17,12 +17,14 @@ namespace JwtAuthDemo.Services
         public string GenerateToken(User user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            Console.WriteLine($"Token'a eklenecek role: {user.Role}");
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Sub,user.Email),
                 new Claim("uid",user.Id.ToString()),
-                new Claim("username",user.Username.ToString())
-
+                new Claim("username",user.Username.ToString()),
+                new Claim("isEmailConfirmed", user.IsEmailConfirmed.ToString().ToLower()),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var token = new JwtSecurityToken

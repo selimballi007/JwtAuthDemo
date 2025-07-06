@@ -14,5 +14,6 @@ namespace JwtAuthDemo.Models
         public string? ResetToken { get; set; }
         public DateTime? ResetTokenExpiry { get; set; }
         public bool IsEmailConfirmed { get; set; }
+        public string Role { get; set; } = "User";
     }
 }
