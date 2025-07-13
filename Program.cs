@@ -34,7 +34,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add services to the container.
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IFileTemplateService, FileTemplateService>();
@@ -69,6 +69,8 @@ builder.Services.AddSwaggerGen(options =>
             new string[] { }
         }
     });
+
+    options.SwaggerDoc("v1", new() { Title = "JwtAuth Development", Version = "v1" });
 });
 
 builder.Services.AddCors(options =>
